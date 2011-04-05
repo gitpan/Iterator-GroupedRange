@@ -1,5 +1,5 @@
 ---
-abstract: 'Iterate grouped array'
+abstract: 'Iterates rows is grouped by range'
 author:
   - 'Toru Yamaguchi <zigorou@cpan.org>'
 build_requires:
@@ -21,4 +21,4 @@ no_index:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/zigorou/p5-iterator-groupedrange.git
-version: 0.02
+version: 0.03
