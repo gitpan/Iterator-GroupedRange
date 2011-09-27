@@ -3,16 +3,14 @@ package Iterator::GroupedRange;
 use strict;
 use warnings;
 
-use Scalar::Util qw(blessed);
-
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub new {
     my $class = shift;
     my ( $code, $range, $opts ) = @_;
 
     $range ||= 1000;
-    $opts  ||= +{};
+    $opts  ||= {};
 
     %$opts = (
         rows => undef,
@@ -23,11 +21,11 @@ sub new {
         my @ds = @$code;
         $opts->{rows} = scalar @ds;
         $code = sub {
-            [ splice( @ds, 0, $range ) ];
+            @ds > 0 ? [ splice( @ds, 0, $range ) ] : undef;
         };
     }
 
-    return bless +{
+    return bless {
         code           => $code,
         range          => $range,
         is_last        => 0,
@@ -43,7 +41,7 @@ sub has_next {
     return 0 if ( $self->{is_last} );
     return 1 if ( $self->{_has_next} );
     $self->{_buffer} = $self->{code}->();
-    if ( defined $self->{_buffer} && @{ $self->{_buffer} } > 0 ) {
+    if ( defined $self->{_buffer} ) {
         $self->{_has_next} = 1;
         return 1;
     }
@@ -55,14 +53,14 @@ sub has_next {
 sub next {
     my $self = shift;
 
-    return [] if ( $self->{is_last} );
-    return [] unless ( defined $self->{_buffer} );
+    return if ( $self->{is_last} );
+    return unless ( defined $self->{_buffer} );
 
     my @buffer = @{ $self->{_buffer} };
 
     while ( @buffer < $self->{range} ) {
         my $rv = $self->{code}->();
-        unless ( defined $rv && @$rv > 0 ) {
+        unless ( defined $rv ) {
             if ( @{$self->{_append_buffer}} > 0 ) {
                 my @append_buffer = @{$self->{_append_buffer}};
 
@@ -114,6 +112,11 @@ sub rows {
     else {
         return $_[0]->{rows};
     }
+}
+
+sub range {
+    return $_[0]->{range} = $_[1] if @_ == 2;
+    shift->{range};
 }
 
 1;
@@ -171,15 +174,30 @@ This list reference will be code reference that will be return a set of specifie
 
 =item $range
 
-Most number of retriving rows by each iteration. Default value is 1000.
+Most number of retrieving rows by each iteration. Default value is 1000.
 
 =item %opts
 
 =over
 
+=item range
+
+Grouped size.
+
 =item rows
 
-Accessor of rows field.
+Number of rows. For example, using L<DBI>'s statement handle:
+
+  my $sth = $dbh->prepare('SELECT blah FROM example');
+  $sth->execute;
+  my $iter; $iter = Iterator::GroupedRange->new(sub {
+      if ( my $ids = $sth->fetchrow_arrayref( undef, $iter->range ) ) {
+          return [ map { $_->[0] } @$ids ];
+      }
+      else {
+          return;
+      }
+  }, { rows => $sth->rows, range => 1000 });
 
 =back
 
@@ -197,6 +215,15 @@ Return next rows.
 
 Return which the iterator becomes ended of iteration or not.
 
+=head2 append(@items)
+=head2 append(\@items)
+
+Append new items.
+
+=head2 range()
+
+Return grouped size.
+
 =head2 rows()
 
 Return total rows.
@@ -211,8 +238,8 @@ Toru Yamaguchi E<lt>zigorou@cpan.orgE<gt>
 
 =item L<List::MoreUtils>
 
-L<List::MoreUtils> has natatime subroutine looks like this module.
-The natatime subroutine can treat only list.
+L<List::MoreUtils> has C<natatime> subroutine looks like this module.
+The C<natatime> subroutine can treat only list.
 
 =item L<DBI>
 
