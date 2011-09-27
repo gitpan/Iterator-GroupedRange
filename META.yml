@@ -21,4 +21,4 @@ no_index:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/zigorou/p5-iterator-groupedrange.git
-version: 0.05
+version: 0.06
