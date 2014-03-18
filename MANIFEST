@@ -2,10 +2,8 @@ Build.PL
 Changes
 LICENSE
 META.json
-Makefile
 README.md
 cpanfile
-inc/Test/More.pm
 lib/Iterator/GroupedRange.pm
 minil.toml
 t/array.t
