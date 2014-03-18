@@ -3,7 +3,7 @@ package Iterator::GroupedRange;
 use strict;
 use warnings;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 sub new {
     my $class = shift;
@@ -87,7 +87,7 @@ sub next {
     $self->{_buffer}   = [ @buffer ];
     $self->{_has_next} = @buffer > 0 ? 1 : 0;
 
-    return \@rs;
+    return @rs ? \@rs : ();
 }
 
 sub append {
@@ -99,6 +99,12 @@ sub append {
     }
 
     push(@{$self->{_append_buffer}}, @$rows);
+
+    if (!$self->{_has_next} && @{$self->{_append_buffer}}) {
+        $self->{_has_next} = 1;
+    }
+
+    return scalar @$rows;
 }
 
 sub is_last {
@@ -216,6 +222,7 @@ Return next rows.
 Return which the iterator becomes ended of iteration or not.
 
 =head2 append(@items)
+
 =head2 append(\@items)
 
 Append new items.
